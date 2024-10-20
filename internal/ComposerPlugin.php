@@ -30,7 +30,7 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     {
         self::$activated = true;
         $this->composer = $composer;
-        $this->io = $io;        
+        $this->io = $io;
     }
 
     // 停用事件
@@ -42,92 +42,86 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     // 删除事件
     public function uninstall(Composer $composer, IOInterface $io): void
     {
-        // ToDo Codeing
+        self::$activated = false;
+
+        $projectPath = \dirname(realpath(Factory::getComposerFile())) . DIRECTORY_SEPARATOR;
+        if (file_exists($projectPath . 'runtime/_vqmod.mods')) {
+            unlink($projectPath . 'runtime/_vqmod.mods');
+        }
+        if (file_exists($projectPath . 'runtime/_vqmod.checked')) {
+            unlink($projectPath . 'runtime/_vqmod.checked');
+        }
+        if (is_dir($projectPath . 'runtime/_vqmod.cache/')) {
+            array_map('unlink', glob($projectPath . 'runtime/_vqmod.cache/*'));
+            rmdir($projectPath . 'runtime/_vqmod.cache/');
+        }
+        if (is_dir($projectPath . 'runtime/_vqmod.logs/')) {
+            array_map('unlink', glob($projectPath . 'runtime/_vqmod.logs/*'));
+            rmdir($projectPath . 'runtime/_vqmod.logs/');
+        }
     }
 
     public function updateAutoloadFile(): void
     {
-        $ugrsrFile = __DIR__.'/../source/install/ugrsr.class.php';
+        $ugrsrFile = __DIR__ . '/../source/install/ugrsr.class.php';
         $vendorPath = realpath($this->composer->getConfig()->get('vendor-dir'));
 
-        if (!is_file($autoloadFile = $vendorPath.'/autoload.php') || !is_file($ugrsrFile)) {
+        if (!is_file($autoloadFile = $vendorPath . '/autoload.php') || !is_file($ugrsrFile)) {
             return;
-        }
+        }        
 
         $projectPath = \dirname(realpath(Factory::getComposerFile())) . DIRECTORY_SEPARATOR;
-      
-        require($ugrsrFile);
 
         // *Counters
         $writes = 0;
         $changes = 0;
-        $write_files = [];
-        $write_errors = [];
-        foreach (self::$editFile as $file) {
-            if (!is_file($projectPath . $file) || !is_writeable($projectPath . $file)) {
-                $write_errors[] = sprintf('File "%s" not writeable', $file);
-            } else {
-                $write_files[] = $file;
-            }
-        }
-
-        if (!empty($write_errors)) {
-            throw new \InvalidArgumentException(implode(PHP_EOL, $write_errors));
-        }
 
         if (!is_dir($projectPath . 'runtime')) {
             mkdir($projectPath . 'runtime');
-        }
-
-        // *Create new UGRSR class
-        $u = new \UGRSR($projectPath);
-
-        // *remove the # before this to enable debugging info
-        #$u->debug = true;
-
-        // *Set file searching to off
-        $u->file_search = false;
-
-        foreach ($write_files as $write_file) {
-            $u->clearPatterns();
-            $u->resetFileList();
-
-            $u->addFile($write_file);
-
-            // Pattern to run required files through vqmod
-            $u->addPattern('/require_once\s+__DIR__\s*\.\s*\'([^\']+)\'\;/', '// VirtualQMOD
-if(is_file(__DIR__ . \'/iocui/vqmod/init.php\')){
-    // VQMODDED Startup https://gitee.com/iocui/vqmod.git
-    require_once(__DIR__ . \'/iocui/vqmod/init.php\');
-    require_once(\VQModInit::load(__DIR__ . \'$1\'));
-}else{
-    // original require
-    require_once(__DIR__ . \'$1\');
-}');
-
-            // *Get number of changes during run
-            $result = (array)$u->run();
-            if ($result) {
-                $changes += $result['changes'];
-                $writes += $result['writes'];
-            }
         }
 
         if (file_exists($projectPath . 'runtime/_vqmod.mods')) {
             unlink($projectPath . 'runtime/_vqmod.mods');
         }
 
-        if(is_dir($projectPath . 'runtime/_vqmod.cache/')){
-            array_map('unlink', glob($projectPath . 'runtime/_vqmod.cache/*'));
+        $write_file = 'vendor/autoload.php';
+        $autoloadTemplate = __DIR__.'/autoload_vqmod.template';
+        $code = file_get_contents($autoloadTemplate);
+
+        // $content = file_get_contents($autoloadFile);
+        // file_put_contents(substr_replace($autoloadFile, '_vqmod', -4, 0), $content);
+        // $write_file = 'vendor/autoload_vqmod.php';
+
+        require_once $ugrsrFile;
+
+        // *Create new UGRSR class
+        $u = new \UGRSR($projectPath);
+
+        // *remove the # before this to enable debugging info
+        ### $u->debug = true;
+
+        // *Set file searching to off
+        $u->file_search = false;
+
+        $u->addFile($write_file);
+
+        // *Pattern to run required files through vqmod
+        $u->addPattern('/require_once([^\;]+)/', $code);
+
+        // *Get number of changes during run
+        $result = $u->run();
+        if (is_array($result)) {
+            $changes += $result['changes'];
+            $writes += $result['writes'];
         }
 
         // *output result to user
-        if (!$changes){
+        if (!$changes) {
             echo 'VQMod has been installed on your system!' . PHP_EOL;
-        }else{
-            if ($writes < 1){
+        } else {
+            if ($writes < 1) {
                 echo 'VQMod unable to write to one or more files.' . PHP_EOL;
-            }else{
+            } else {
                 echo 'VQMod install succee!' . PHP_EOL;
             }
         }

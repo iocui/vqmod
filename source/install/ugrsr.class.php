@@ -265,7 +265,7 @@ class UGRSR {
 	/**
 	 * UGRSR::run()
 	 * 
-	 * @return bool
+	 * @return bool|array Edit By PGcao
 	 */
 	public function run() {
 		

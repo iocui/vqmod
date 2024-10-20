@@ -1,0 +1,9 @@
+// VirtualQMOD Start
+if(is_file(__DIR__ . '/iocui/vqmod/init.php')){
+    // VQMODDED Startup https://gitee.com/iocui/vqmod.git
+    require_once(__DIR__ . '/iocui/vqmod/init.php');
+    require_once(\VQModInit::load($1));
+}else{
+    // Original require
+    require_once($1);
+} // VirtualQMOD End 

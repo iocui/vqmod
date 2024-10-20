@@ -4,11 +4,9 @@
  * see https://github.com/vqmod/vqmod/wiki  
  */
 
-require_once(__DIR__ . '/source/vqmod.php');
-
 class VQModInit
 {
-    public static $version = '1.0.0';
+    public static $version = '1.0.1';
 
     public static function load($file)
     {
@@ -19,12 +17,15 @@ class VQModInit
             !defined('SIGINT') && define('SIGINT', 2);
         }
 
+        require_once(__DIR__ . '/source/vqmod.php');
+
         \VQMod::$modCache = 'runtime/_vqmod.mods';
         \VQMod::$checkedCache = 'runtime/_vqmod.checked';
         \VQMod::$vqCachePath = 'runtime/_vqmod.cache/';
         \VQMod::$logFolder = 'runtime/_vqmod.logs/';
 
         $path = dirname($file, 3);
+
         \VQMod::bootup($path); // root path
 
         return \VQMod::modCheck($file);
