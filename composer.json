@@ -1,0 +1,32 @@
+{
+    "name": "iocui/vqmod",
+    "description": "composer vqmod plugin",
+    "license": "MIT",
+    "type": "composer-plugin",
+    "autoload": {
+        "psr-4": {
+            "iocui\\vqmod\\": "internal/"
+        }
+    },
+    "authors": [
+        {
+            "name": "pgcao",
+            "email": "pgcao@qq.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.2.5",
+        "composer-plugin-api": "^1.0|^2.0"
+    },
+    "require-dev": {
+        "composer/composer": "^1.0.2|^2.0"
+    },
+    "extra": {
+        "class": "iocui\\vqmod\\ComposerPlugin"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true
+    }
+}
