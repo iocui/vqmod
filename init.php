@@ -8,6 +8,8 @@ require_once(__DIR__ . '/source/vqmod.php');
 
 class VQModInit
 {
+    public static $version = '1.0.0';
+
     public static function load($file)
     {
         if (DIRECTORY_SEPARATOR === '/') {
