@@ -5,7 +5,7 @@
  */
 abstract class VQMod {
 
-	public static $_vqversion = '2.6.8.12';						// Current version number
+	public static $_vqversion = '2.6.8.13';						// Current version number
 
 	private static $_modFileList = array();						// Array of xml files
 	private static $_mods = array();							// Array of modifications to apply
@@ -113,7 +113,6 @@ abstract class VQMod {
 		} else {
 			$modificationsPath = $sourcePath;
 		}
-
 		if(!$sourcePath || is_dir($sourcePath) || in_array($sourcePath, self::$_doNotMod)) {
 			return $sourceFile;
 		}
@@ -154,10 +153,12 @@ abstract class VQMod {
 			file_put_contents(self::path(self::$checkedCache, true), $stripped_filename . PHP_EOL, FILE_APPEND | LOCK_EX);
 			
 			// Prevent checked.cache file from duplicating lines when checked folder is above vqmod directory - Thanks adrianolmedo
-			$lines = file(self::path(self::$checkedCache, true));
-			$lines = array_unique($lines);
-			file_put_contents(self::path(self::$checkedCache, true), implode($lines), LOCK_EX | LOCK_NB); // 加锁防高并发写入失败 Edit By PGCAO
-			
+			$lines = @file(self::path(self::$checkedCache, true)); // use @ hide err Edit By PGcao
+			if(!empty($lines)) { // with errno=13 Permission denied Edit By PGcao
+				$lines = array_unique($lines);
+				file_put_contents(self::path(self::$checkedCache, true), implode($lines), LOCK_EX | LOCK_NB); // 加锁防高并发写入失败 Edit By PGCAO
+			}
+
 			self::$_doNotMod[] = $sourcePath;
 		}
 
@@ -331,7 +332,7 @@ abstract class VQMod {
 	private static function _loadProtected() {
 		$file = self::path(self::$protectedFilelist);
 		if($file && is_file($file)) {
-			$paths = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+			$paths = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);// use @ hide err Edit By PGcao
 			if(!empty($paths)) {
 				foreach($paths as $path) {
 					$fullPath = self::path($path);
@@ -352,7 +353,7 @@ abstract class VQMod {
 	private static function _loadChecked() {
 		$file = self::path(self::$checkedCache);
 		if($file && is_file($file)) {
-			$paths = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+			$paths = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);// use @ hide err Edit By PGcao
 			if(!empty($paths)) {
 				foreach($paths as $path) {
 					$fullPath = self::path($path, true);
@@ -565,7 +566,7 @@ class VQModLog {
 	 * @return null
 	 * @description Adds error to log object ready to be output
 	 */
-	public function write($data, VQModObject $obj = NULL) {
+	public function write($data, ?VQModObject $obj = NULL) {
 		if($obj) {
 			$hash = sha1($obj->id);
 		} else {
